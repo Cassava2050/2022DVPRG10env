@@ -133,8 +133,10 @@ accession_rep_ct
 # Fixing some issues
 
 ```{r}
-trial_standard <- trial_standard %>% 
-  mutate(use_harvest_date = ifelse(use_trial_name == '202123LAEPR_polo', '2022-April-20', use_harvest_date)) 
+if(FALSE){ trial_standard <- trial_standard %>% 
+  mutate(use_harvest_date = ifelse(use_trial_name == '202123LAEPR_polo', '2022-April-20', use_harvest_date))
+
+}
 ```
 
 ## Genotypes per trial
@@ -187,7 +189,7 @@ plants_harvested %>%
 
 Decision based on low heritability
 
-```{r}
+```{r eval=FALSE}
 trial_standard <-
   trial_standard %>%
   mutate(
@@ -197,19 +199,33 @@ trial_standard <-
   )
 ```
 
+# Remove trials from CIAT
+
+```{r}
+trial_standard <-
+  trial_standard %>%
+  filter(!use_trial_name %in% c("202050DVPRG_ciat", "202136DVPRG_ciat")) %>%
+  mutate(
+    obs_yield_ha = ifelse(use_plot_name == "202082DVPRG_pivi_rep1_PER497_206", NA, obs_yield_ha),
+    obs_yield_ha = ifelse(use_plot_name == "202082DVPRG_pivi_rep2_CM2766-5_251", NA, obs_yield_ha)
+  )
+```
+
+
 ## Compute germination, yield, yield_starch
 
 ```{r}
   
 trial_standard_new <- trial_standard %>%
   mutate(obs_harvest_number_plan =
-           case_when(str_detect(use_trial_name, "202123") &  str_detect(use_trial_name , "LAEPR") ~ 6,
-                     str_detect(use_trial_name, "202124") &  str_detect(use_trial_name , "LAEPR") ~ 6, 
-                     str_detect(use_trial_name, "202125") &  str_detect(use_trial_name , "LAEPR") ~ 6, 
-                     str_detect(use_trial_name, "202221") &  str_detect(use_trial_name , "LAEAR") ~ 6,
-                     str_detect(use_trial_name, "202222") &  str_detect(use_trial_name , "LAEAR") ~ 6,
-                     str_detect(use_trial_name, "202223") &  str_detect(use_trial_name , "LAEAR") ~ 6,
-                     str_detect(use_trial_name, "202269") &  str_detect(use_trial_name , "LAEAR") ~ 6),
+           case_when(str_detect(use_trial_name, "202081") &  str_detect(use_trial_name , trial_interest) ~ 6,
+                     str_detect(use_trial_name, "202082") &  str_detect(use_trial_name , trial_interest) ~ 6, 
+                     str_detect(use_trial_name, "202118") &  str_detect(use_trial_name , trial_interest) ~ 6, 
+                     str_detect(use_trial_name, "202121") &  str_detect(use_trial_name , trial_interest) ~ 6,
+                     str_detect(use_trial_name, "202136") &  str_detect(use_trial_name , trial_interest) ~ 4,
+                     str_detect(use_trial_name, "202217") &  str_detect(use_trial_name , trial_interest) ~ 8,
+                     str_detect(use_trial_name, "202218") &  str_detect(use_trial_name , trial_interest) ~ 6,
+                     str_detect(use_trial_name, "202252") &  str_detect(use_trial_name , trial_interest) ~ 6),
          obs_germination_perc = obs_germinated_number_plot/obs_planted_number_plot * 100,
          # 2) calculate area per plant
          area_plant = (use_plot_length*use_plot_width)/obs_planted_number_plot,
@@ -379,7 +395,7 @@ pacman::p_load(tidyverse,
                corrplot)
 source("https://raw.githubusercontent.com/Cassava2050/PPD/main/utilities_tidy.R")
 
-trial_interest <- "LAEAR"
+trial_interest <- "DVPRG"
 year_interest <- 2022
 ```
 
@@ -458,6 +474,14 @@ print("All the meta information:")
 print(meta_col)
 ```
 
+From here I'm going to create an extra branch to carry out one group of the analysis 
+
+# First group 
+
+First group are 202118DVPRG_momi, 202121DVPRG_repe, 202081DVPRG_momi, 202082DVPRG_pivi
+
+
+
 ## Check the SD of each trait
 
 ```{r}
@@ -471,7 +495,12 @@ master_data[["mean_of_sd"]] = sd_mean
 
 ```{r}
 analysis_trait <- names(trial_rm_sd)[names(trial_rm_sd) %in% trait_all_adj]
-trait_ideal <- analysis_trait[ -c(5, 6, 8:12, 14,  16, 17, 19, 21:30, 32, 34)]
+
+traits_for_analysis <- c("branch_number", "DM_gravity", "height_1st_branch", "yield_ha", "vigor1_5", 
+  "plant_type", "height", "root_skin_color1_3", "root_type1_5", "carotenoid1_8", 
+  "germination_perc", "DM_yield_ha") 
+
+trait_ideal <- analysis_trait[analysis_trait %in% traits_for_analysis]
 print("the trait ideal is:"); trait_ideal
 ```
 
@@ -483,9 +512,9 @@ correlation <- gg_cor(
   data = trial_rm_sd[, trait_ideal],
   label_size = 2.5
 )
-# ggsave(paste0("images\\pheno_corr_", trial_interest, Sys.Date(), ".png"),
-#      plot = correlation, units = "in", dpi = 300, width = 12, height = 6
-#    )
+ggsave(paste0("images\\pheno_corr_", trial_interest, Sys.Date(), ".png"),
+     plot = correlation, units = "in", dpi = 300, width = 12, height = 6
+   )
 ```
 
 ## Check design experimental
@@ -510,7 +539,7 @@ results <- check_design_met(
 shared <- plot(results, type = "connectivity")
 
 # ggsave(paste0('images\\shared_', trial_interest, Sys.Date(), ".png"),
-#        plot = shared, units = "in", dpi = 300, width = 8, height = 6)  
+#        plot = shared, units = "in", dpi = 300, width = 8, height = 6)
   
   
 summary <- results$summ_traits 
