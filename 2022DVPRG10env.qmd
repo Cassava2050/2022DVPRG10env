@@ -478,7 +478,14 @@ From here I'm going to create an extra branch to carry out one group of the anal
 
 # First group 
 
-First group are 202118DVPRG_momi, 202121DVPRG_repe, 202081DVPRG_momi, 202082DVPRG_pivi
+First group is compound by 202118DVPRG_momi, 202121DVPRG_repe, 202081DVPRG_momi, 202082DVPRG_pivi
+
+
+```{r}
+trial_tidy_all <- trial_tidy_all %>% filter(trial_name %in% c("202118DVPRG_momi", "202121DVPRG_repe", "202081DVPRG_momi", "202082DVPRG_pivi"))
+
+group = "group1"
+```
 
 
 
@@ -497,7 +504,7 @@ master_data[["mean_of_sd"]] = sd_mean
 analysis_trait <- names(trial_rm_sd)[names(trial_rm_sd) %in% trait_all_adj]
 
 traits_for_analysis <- c("branch_number", "DM_gravity", "height_1st_branch", "yield_ha", "vigor1_5", 
-  "plant_type", "height", "root_skin_color1_3", "root_type1_5", "carotenoid1_8", 
+  "plant_type", "height", "root_skin_color1_3", "root_type1_5", # "carotenoid1_8", 
   "germination_perc", "DM_yield_ha") 
 
 trait_ideal <- analysis_trait[analysis_trait %in% traits_for_analysis]
@@ -512,9 +519,9 @@ correlation <- gg_cor(
   data = trial_rm_sd[, trait_ideal],
   label_size = 2.5
 )
-ggsave(paste0("images\\pheno_corr_", trial_interest, Sys.Date(), ".png"),
-     plot = correlation, units = "in", dpi = 300, width = 12, height = 6
-   )
+# ggsave(paste0("images\\pheno_corr_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
+#      plot = correlation, units = "in", dpi = 300, width = 12, height = 6
+#    )
 ```
 
 ## Check design experimental
@@ -538,8 +545,8 @@ results <- check_design_met(
 
 shared <- plot(results, type = "connectivity")
 
-# ggsave(paste0('images\\shared_', trial_interest, Sys.Date(), ".png"),
-#        plot = shared, units = "in", dpi = 300, width = 8, height = 6)
+ggsave(paste0('images\\shared_', trial_interest, "_", group, "_", Sys.Date(), ".png"),
+       plot = shared, units = "in", dpi = 300, width = 8, height = 6)
   
   
 summary <- results$summ_traits 
@@ -553,14 +560,14 @@ p1 <- summary %>%
   theme(axis.text.x = element_text(hjust = 1 , angle = 75, size = 16),
         axis.text.y = element_text(size = 16))
 p1
-# ggsave(paste0("images\\missing_", trial_interest, Sys.Date(), ".png"),
+# ggsave(paste0("images\\missing_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
 #      plot = p1, units = "in", dpi = 300, width = 12, height = 6
 #    )
 master_data[["summ_traits"]] <- summary
 ```
 
 ```{r}
-shared_genos_2022 <- check_connectivity(
+shared_genos_2021 <- check_connectivity(
     data = my_dat,
     genotype = "accession_name",
     trial = "trial_name",
@@ -568,7 +575,7 @@ shared_genos_2022 <- check_connectivity(
     all = TRUE,
     return_matrix = FALSE
   )
-shared_genos_2022 <- shared_genos_2022 %>% select(accession_name, starts_with("2022")) %>% 
+shared_genos_2021 <- shared_genos_2021 %>% select(accession_name, starts_with("2021")) %>% 
   drop_na() %>% pull(accession_name)
 ```
 
@@ -625,7 +632,7 @@ heri <- obj$resum_fitted_model[ ,1:3] %>%
   
 master_data[["single_h2"]] <- single_h2
 
-# "202221LAEAR_momi" "202222LAEAR_repe" "202269LAEAR_saha" <- h = 1
+
 single_h2 %>%
   write.table("clipboard", sep = "\t", col.names = T, row.names = F, na = "")
 ```
@@ -765,7 +772,7 @@ stab <- met_results$stability %>%
   filter(trait == var) %>% 
   arrange(superiority) %>% 
         pivot_wider(names_from = "trait", values_from = c('predicted.value')) %>% 
-  filter(genotype %in% shared_genos_2022)
+  filter(genotype %in% shared_genos_2021)
 
 # Change colname
 colnames(stab)[5] <- paste('BLUPs', colnames(stab)[5], sep = '_') 
@@ -774,15 +781,15 @@ colnames(stab)[c(2, 3, 4)] <- paste(colnames(stab)[c(2, 3, 4)], var, sep = '_')
 master_data[[paste0("stability_", var)]] <- stab
 }
 
+
 length(master_data) # elements number of list
 
-stab_values <- master_data[c(24:34)] %>% 
+
+stab_values <- master_data[c(21:31)] %>% 
   reduce(inner_join, by = "genotype") %>% 
   select(!starts_with("BLUPs_")) %>% 
   mutate(across(where(is.numeric), round, 2))
 # join all stability dataframes of a list
-
-
 
 ```
 
@@ -850,8 +857,8 @@ geno_cor <- gg_cor(
   axis.text.y = element_text(size = 18),
   axis.text.x = element_text(size = 18))
 
-
-# ggsave(paste0("images\\geno_corr", trial_interest, Sys.Date(), ".png"),
+# 
+# ggsave(paste0("images\\geno_corr", trial_interest, "_", group, "_", Sys.Date(), ".png"),
 #        plot = geno_cor, units = "in", dpi = 300, width = 12, height = 10)
 ```
 
@@ -859,7 +866,7 @@ geno_cor <- gg_cor(
 
 ```{r}
 folder_output <- here::here("output//")
-meta_file_name <- paste0(folder_output, paste0("2022", trial_interest, "7env", "_master_results_", Sys.Date(), "_.xlsx" ))
+meta_file_name <- paste0(folder_output, paste0("2022", trial_interest, "4env", "_master_results_", Sys.Date(), "_.xlsx" ))
 write.xlsx(master_data, file = meta_file_name)
 ```
 
@@ -885,7 +892,7 @@ blupDF_kp <- read_excel(
 
 ```{r}
 blupDF_kp <- blupDF_kp %>% 
-  filter(accession_name %in% shared_genos_2022)
+  filter(accession_name %in% shared_genos_2021)
 ```
 
 ## Selection index
@@ -965,7 +972,7 @@ selIndex <- function (Y, b, scale = FALSE)
 TestIndex_ <- index_dat %>%
   rownames_to_column("accession_name") %>%
   drop_na()
-res.pca <- pca_index(data = TestIndex_, id = "accession_name", b = c(10, -5, 10), percentage = 0.40)
+res.pca <- pca_index(data = TestIndex_, id = "accession_name", b = c(10, -5, 10), percentage = 0.20)
 res.pca_final <- res.pca$final
 res.pca_final
 # ggsave(paste("images/selection",  trial_interest, Sys.Date(), ".png"), plot = res.pca_final, units = "in", dpi = 300, width = 10, height = 10)
@@ -990,13 +997,13 @@ master_data[["BLUEs_BLUPs_MET"]] = BLUEs_BLUPs
 
 ```{r}
 folder_output <- here::here("output//")
-meta_file_name <- paste0(folder_output, paste0("2022", trial_interest, "7env", "_master_results_", Sys.Date(), "_.xlsx" ))
+meta_file_name <- paste0(folder_output, paste0("2022", trial_interest, "4env", "_master_results_", Sys.Date(), "_.xlsx" ))
 write.xlsx(master_data, file = meta_file_name)
 ```
 
 ## Save the selections
 
 ```{r}
-write.csv(selections, here::here("output", paste("01_", year_interest, trial_interest,
-  "_selection_", Sys.Date(), ".csv", sep = "")), row.names = FALSE)
+write.csv(selections, here::here("output", paste("01", year_interest, trial_interest, "4env",
+  "selection", Sys.Date(), ".csv", sep = "_")), row.names = FALSE)
 ```
