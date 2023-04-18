@@ -14,7 +14,8 @@ This repo contains the data analysis of 6 Low amilose trials in Colombia. Each t
 
 ![](https://github.com/Cassava2050/2022DVPRG8env/blob/main/images/map.png) 
 
-::: {align="center"}
+<div align="center">
+
 | trial_name       | plant_date   | harvest_date     | harvesting_time | location                         | n_gen |
 |------------------|--------------|------------------|-----------------|----------------------------------|-------|
 | 202081DVPRG_momi | 2020-July-22 | 2021-May-03      | 9month 11day    | Momil. Cordoba, Colombia         | 228   |
@@ -25,4 +26,4 @@ This repo contains the data analysis of 6 Low amilose trials in Colombia. Each t
 | 202218DVPRG_repe | 2022-May-08  | 2023-February-21 | 9month 13day    | Repelon. Atlantico, Colombia     | 117   |
 | 202252DVPRG_stom | 2022-June-30 | 2023-March-03    | 8month 3day     | Santo Tomas. Atlantico, Colombia | 117   |
 | 202231DVPRG_ciat | 2022-July-07 | No yet harvested |                 | CIAT, Valle, Colombia            |       |
-:::
+</div>
