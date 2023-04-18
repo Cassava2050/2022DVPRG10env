@@ -9,7 +9,7 @@ editor: visual
 
 # Introduction
 
-This document is showing the data analysis of 10 DVPRG trials in Colombia.
+This document is showing the data analysis of 8 DVPRG trials in Colombia.
 
 The trials were managed by CIAT and the locations were:
 
@@ -17,7 +17,8 @@ The trials were managed by CIAT and the locations were:
 -   Palmira, Valle del Cauca - Colombia
 -   Repelon, Atlantico - Colombia
 -   Santo Tomas, Atlantico - Colombia
--   Sahagun, Cordoba - Colombia
+-   Pvijay, Magdalena - Colombia
+
 
 ## Load the libraries
 
