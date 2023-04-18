@@ -12,6 +12,8 @@ This repo contains the data analysis of 6 Low amilose trials in Colombia. Each t
 > -   **202218DVPRG_repe**: Conducted in May **2022** at the Repelon location, with **117** cassava clones tested.
 > -   **202252DVPRG_stom**: Conducted in June **2022** at the Santo Tomas location, with **117** cassava clones tested.
 
+![](https://github.com/Cassava2050/2022DVPRG8env/blob/main/images/map.png) 
+
 ::: {align="center"}
 | trial_name       | plant_date   | harvest_date     | harvesting_time | location                         | n_gen |
 |------------------|--------------|------------------|-----------------|----------------------------------|-------|
