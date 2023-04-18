@@ -120,8 +120,6 @@ trial_standard <- add_GIS(trial_standard)
 
 ![](images/map.png)
 
-
-
 ```{r}
 accession_rep_ct <- trial_standard %>%
   count(use_trial_name, use_accession_name, use_rep_number)  %>%
@@ -133,8 +131,8 @@ accession_rep_ct
 # Fixing some issues
 
 ```{r}
-if(FALSE){ trial_standard <- trial_standard %>% 
-  mutate(use_harvest_date = ifelse(use_trial_name == '202123LAEPR_polo', '2022-April-20', use_harvest_date))
+if(TRUE){ trial_standard <- trial_standard %>% 
+  mutate(use_harvest_date = ifelse(use_trial_name == '202218DVPRG_repe', '2023-February-21', use_harvest_date))
 
 }
 ```
@@ -174,7 +172,7 @@ plants_harvested <- trial_standard %>%
   group_by(use_trial_name) %>%
   count(obs_harvest_number) %>% arrange(desc(obs_harvest_number))
 
-plants_harvested %>% 
+plants_harvested %>% filter(!str_detect(use_trial_name, 'ciat')) %>% 
   ggplot(aes(x = factor(obs_harvest_number), 
              y = n, fill = factor(obs_harvest_number))) +
   geom_col(col = 'black') +
@@ -182,7 +180,7 @@ plants_harvested %>%
   theme_xiaofei() +
   labs(x = "Harvest_plant_number", y = "Freq", fill = "Harvest_plant_number") +
   facet_wrap(~ use_trial_name, scales = 'free') +
-  theme(strip.text.x = element_text(size = 8))
+  theme(strip.text.x = element_text(size = 7))
 ```
 
 ## Remove yield data from 202221LAEAR_momi and root_type1_5 data from 202269LAEAR_saha
@@ -210,7 +208,6 @@ trial_standard <-
     obs_yield_ha = ifelse(use_plot_name == "202082DVPRG_pivi_rep2_CM2766-5_251", NA, obs_yield_ha)
   )
 ```
-
 
 ## Compute germination, yield, yield_starch
 
@@ -474,31 +471,36 @@ print("All the meta information:")
 print(meta_col)
 ```
 
-From here I'm going to create an extra branch to carry out one group of the analysis 
+```{r}
+#group = "group1" #----- Choose one
 
-# First group 
+group = "group2"
+```
+
+
+# First group
 
 First group is compound by 202118DVPRG_momi, 202121DVPRG_repe, 202081DVPRG_momi, 202082DVPRG_pivi
 
 ```{r}
-trial_tidy_all <- trial_tidy_all %>% filter(trial_name %in% c("202118DVPRG_momi", "202121DVPRG_repe", "202081DVPRG_momi", "202082DVPRG_pivi"))
+if(group == "group1"){ 
+trial_tidy_all <- trial_tidy_all %>% filter(trial_name %in% c("202118DVPRG_momi", "202121DVPRG_repe", "202081DVPRG_momi", "202082DVPRG_pivi"))} else {
+  print('We are working on group 2')
+}
 
-group = "group1"
 ```
 
-
-# Second group 
+# Second group
 
 Second group is compound by 202217DVPRG_momi, 202218DVPRG_repe, 2022DV52PRG_stom
 
 ```{r}
+if(group == "group2"){ 
 trial_tidy_all <- trial_tidy_all %>% filter(trial_name %in% c("202217DVPRG_momi", "202218DVPRG_repe", "202252DVPRG_stom"))
-
-group = "group2"
-
-trial_tidy_all %>% distinct(trial_name)
+}else {
+  print('We are working on group 1')
+}
 ```
-
 
 ## Check the SD of each trait
 
@@ -529,10 +531,10 @@ correlation <- gg_cor(
   colours = c("red", "white", "blue"),
   data = trial_rm_sd[, trait_ideal],
   label_size = 2.5
-)
-ggsave(paste0("images\\pheno_corr_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
-     plot = correlation, units = "in", dpi = 300, width = 12, height = 6
-   )
+  )
+# ggsave(paste0("images\\pheno_corr_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
+#      plot = correlation, units = "in", dpi = 300, width = 12, height = 6
+#    )
 ```
 
 ## Check design experimental
@@ -556,8 +558,8 @@ results <- check_design_met(
 
 shared <- plot(results, type = "connectivity")
 
-ggsave(paste0('images\\shared_', trial_interest, "_", group, "_", Sys.Date(), ".png"),
-       plot = shared, units = "in", dpi = 300, width = 8, height = 6)
+# ggsave(paste0('images\\shared_', trial_interest, "_", group, "_", Sys.Date(), ".png"),
+#        plot = shared, units = "in", dpi = 300, width = 8, height = 6)
   
   
 summary <- results$summ_traits 
@@ -571,9 +573,9 @@ p1 <- summary %>%
   theme(axis.text.x = element_text(hjust = 1 , angle = 75, size = 16),
         axis.text.y = element_text(size = 16))
 p1
-ggsave(paste0("images\\missing_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
-     plot = p1, units = "in", dpi = 300, width = 12, height = 6
-   )
+# ggsave(paste0("images\\missing_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
+#      plot = p1, units = "in", dpi = 300, width = 12, height = 6
+#    )
 master_data[["summ_traits"]] <- summary
 ```
 
@@ -731,6 +733,7 @@ corrplot(met_results$VCOV$yield_ha$CORR, method="color",
          tl.cex = 0.8,#Text label color and rotation
          diag=T 
          )
+
 #Dry matter
 corrplot(met_results$VCOV$DM_gravity$CORR, method="color",  
          type="lower", order="hclust", 
@@ -891,10 +894,10 @@ sel_file <- list_file[str_detect(list_file, "_master_results_") &
   str_detect(list_file, trial_interest)]
 sel_file
 
-sel_file[1]
+sel_file[2]
 blupDF_kp <- read_excel(
   paste(folder_output,
-    sel_file[1],
+    sel_file[2],
     sep = ""
   ),
   sheet = paste0("BLUPs_", "gxe")
