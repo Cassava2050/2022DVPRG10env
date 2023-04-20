@@ -184,20 +184,6 @@ plants_harvested %>% filter(!str_detect(use_trial_name, 'ciat')) %>%
   theme(strip.text.x = element_text(size = 7))
 ```
 
-## Remove yield data from 202221LAEAR_momi and root_type1_5 data from 202269LAEAR_saha
-
-Decision based on low heritability
-
-```{r eval=FALSE}
-trial_standard <-
-  trial_standard %>%
-  mutate(
-    obs_root_type1_5 = ifelse(use_trial_name == "202221LAEAR_momi", NA, obs_root_type1_5),
-    obs_yield_ha = ifelse(use_trial_name == "202221LAEAR_momi", NA, obs_yield_ha),
-    obs_root_type1_5 = ifelse(use_trial_name == "202269LAEAR_saha", NA, obs_root_type1_5)
-  )
-```
-
 # Remove trials from CIAT
 
 ```{r}
