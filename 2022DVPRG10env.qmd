@@ -475,7 +475,7 @@ print(meta_col)
 ```{r}
 #group = "group1" #----- Choose one
 
-group = "group2"
+#group = "group2"
 ```
 
 
@@ -537,6 +537,10 @@ correlation <- gg_cor(
 # ggsave(paste("images\\pheno_corr", trial_interest, group, Sys.Date(), ".png", sep = "_"),
 #      plot = correlation, units = "in", dpi = 300, width = 12, height = 8
 #    )
+
+# ggsave(paste("images\\pheno_corr", trial_interest, Sys.Date(), ".png", sep = "_"),
+#      plot = correlation, units = "in", dpi = 300, width = 12, height = 8
+#    )
 ```
 
 
@@ -548,9 +552,9 @@ correlation <- gg_cor(
 my_dat <- trial_rm_sd %>% 
   add_column(block = NA) %>% mutate(block = as.factor(block))
 
-if (group == "group1"){
-  my_dat_1 <- my_dat[!my_dat$trial_name %in% c("202136DVPRG_ciat", "202050DVPRG_ciat"), ]
-}
+
+my_dat <- my_dat[!my_dat$trial_name %in% c("202136DVPRG_ciat", "202050DVPRG_ciat"), ]
+
 
 results <- check_design_met(
   data = my_dat, #my_dat_1
@@ -586,6 +590,8 @@ p1
 master_data[["summ_traits"]] <- summary
 ```
 
+
+
 ```{r}
 if(group == "group1") { 
 shared_genos_2021 <- check_connectivity(
@@ -612,6 +618,9 @@ shared_genos_2021 <- shared_genos_2021 %>% select(accession_name, starts_with("2
 shared_genos_2022 <- shared_genos_2022 %>% select(accession_name, starts_with("2022")) %>% 
   drop_na() %>% pull(accession_name)
 }
+
+# genotypes from 2021 and 2022 of both groups = 242 genotypes
+shared_genos <- union(shared_genos_2021, shared_genos_2022)
 ```
 
 
@@ -621,12 +630,11 @@ shared_genos_2022 <- shared_genos_2022 %>% select(accession_name, starts_with("2
 obj <- single_trial_analysis(results = results,
                              progress = TRUE,
                              remove_outliers = FALSE)
-if(group == "group1") { 
-elements_to_remove <- c("202050DVPRG_ciat", "202136DVPRG_ciat") # from group 1
+
+elements_to_remove <- c("202050DVPRG_ciat", "202136DVPRG_ciat")
+
 trials <- unique(my_dat$trial_name)[!unique(my_dat$trial_name) %in% elements_to_remove]
-} else {
- trials <- unique(my_dat$trial_name) 
-}
+
 
 header_sort = vector()
 i = 1
@@ -714,6 +722,7 @@ master_data[[paste0("BLUPs_", "gxe")]] <- BLUPs_table
 ## Genotypic Correlation: Locations
 
 ```{r dpi=300}
+
 #Yield
 corrplot(met_results$VCOV$yield_ha$CORR, method="color",  
          type="lower", order="hclust", 
@@ -751,7 +760,7 @@ for (var in variables) {
   obj$blues_blups %>%
   select(trial, genotype, trait, BLUEs) %>%
   spread(trait, value = BLUEs) %>%
-  select(trial, genotype, .data[[var]]) %>%
+  select(trial, genotype, any_of(var)) %>%
   group_by(trial, genotype) %>%
   pivot_wider(names_from = trial, values_from = .data[[var]]) %>%
   right_join(BLUPs_table %>%
@@ -764,8 +773,9 @@ blue_blup <- blue_blup[, colSums(is.na(blue_blup)) < nrow(blue_blup)]
 master_data[[paste0("BLUP_BLUE_", var)]] <- blue_blup
 }
 
-if(group == "group1"){ 
-PALMIRA <- my_dat %>% filter(trial_name %in% c("202050DVPRG_ciat", "202136DVPRG_ciat")) %>% 
+
+
+PALMIRA <- trial_rm_sd %>% filter(trial_name %in% c("202050DVPRG_ciat", "202136DVPRG_ciat")) %>% 
   select(accession_name, trial_name, root_type1_5) %>% 
   filter(!accession_name %in% c("GM10055-1", "GM10055-2", "SM1127-8_is_Cubana")) %>% 
   pivot_wider(names_from = trial_name, values_from = root_type1_5)
@@ -774,7 +784,7 @@ PALMIRA <- my_dat %>% filter(trial_name %in% c("202050DVPRG_ciat", "202136DVPRG_
 master_data$BLUP_BLUE_root_type1_5 <- master_data$BLUP_BLUE_root_type1_5 %>% 
   left_join(PALMIRA, by = c("genotype" = "accession_name")) %>% 
   select(-c(root_type1_5), everything(), root_type1_5)
-}
+
 ```
 
 ## Stability analysis
@@ -787,7 +797,7 @@ stab <- met_results$stability %>%
   filter(trait == var) %>% 
   arrange(superiority) %>% 
         pivot_wider(names_from = "trait", values_from = c('predicted.value')) %>% 
-  filter(genotype %in% shared_genos_2022)
+  filter(genotype %in% shared_genos)
 
 # Change colname
 colnames(stab)[5] <- paste('BLUPs', colnames(stab)[5], sep = '_') 
@@ -837,14 +847,14 @@ BLUEs_BLUPs <-
 # remove all NA columns
   BLUEs_BLUPs <- BLUEs_BLUPs[, colSums(is.na(BLUEs_BLUPs)) < nrow(BLUEs_BLUPs)]
 
-if(group == "group1"){     
+
 # put BLUES from PALMIRA data set together with the rest.
   
 colnames(PALMIRA)[-1] <- paste("BLUEs_root_type1_5", colnames(PALMIRA)[-1], sep="_")
   
 BLUEs_BLUPs <- 
   BLUEs_BLUPs %>% left_join(PALMIRA, by = c("genotype" = "accession_name"))
-}
+
 
 # put all together stab_values with blues_blups
 BLUEs_BLUPs <- 
@@ -884,22 +894,24 @@ geno_cor <- gg_cor(
   axis.text.x = element_text(size = 14))
 
 
-# ggsave(paste0("images\\geno_corr", trial_interest, "_", group, "_", Sys.Date(), ".png"),
-#        plot = geno_cor, units = "in", dpi = 300, width = 12, height = 10)
+# ggsave(paste("images\\geno_corr", trial_interest, Sys.Date(), ".png", sep = "_"),
+#        plot = geno_cor, units = "in", dpi = 300, width = 14, height = 8)
 ```
 
 ## Save the master data results
 
 ```{r}
 folder_output <- here::here("output//")
-meta_file_name <- paste0(folder_output, paste("2022", trial_interest, group, "master_results", Sys.Date(), ".xlsx", sep = "_"))
+meta_file_name <- paste0(folder_output, paste("2022", trial_interest, "master_results", Sys.Date(), ".xlsx", sep = "_"))
 
+# It is neccessary change some elements names from master_file
 grep("^stability_root_number_commercial", names(master_data))
 
-names(master_data)[13] <- "BLUP_BLUE_germ_number_plot"
-names(master_data)[22] <- "BLUP_BLUE_root_commercial"
-names(master_data)[35] <- "stability_germ_number_plot"
-names(master_data)[44] <- "stability_root_commercial"
+names(master_data)[19] <- "BLUP_BLUE_germ_number_plot"
+names(master_data)[29] <- "BLUP_BLUE_root_commercial"
+names(master_data)[44] <- "stability_germ_number_plot"
+names(master_data)[54] <- "stability_root_commercial"
+
 write.xlsx(master_data, file = meta_file_name)
 
 ```
@@ -909,13 +921,13 @@ write.xlsx(master_data, file = meta_file_name)
 ```{r}
 list_file <- list.files(folder_output)
 sel_file <- list_file[str_detect(list_file, "_master_results_") &
-  str_detect(list_file, group)]
+  str_detect(list_file, trial_interest)]
 sel_file
 
-sel_file[1]
+sel_file[3]
 blupDF_kp <- read_excel(
   paste(folder_output,
-    sel_file[1],
+    sel_file[3],
     sep = ""
   ),
   sheet = paste0("BLUPs_", "gxe")
@@ -926,7 +938,7 @@ blupDF_kp <- read_excel(
 
 ```{r}
 blupDF_kp <- blupDF_kp %>% 
-  filter(accession_name %in% shared_genos_2022)
+  filter(accession_name %in% shared_genos)
 ```
 
 ## Selection index
@@ -1034,7 +1046,7 @@ master_data[["BLUEs_BLUPs_MET"]] = BLUEs_BLUPs
 
 ```{r}
 folder_output <- here::here("output//")
-meta_file_name <- paste0(folder_output, paste("2022", trial_interest, group, "master_results", Sys.Date(), ".xlsx", sep = "_"))
+meta_file_name <- paste0(folder_output, paste("2022", trial_interest, "master_results", Sys.Date(), ".xlsx", sep = "_"))
 write.xlsx(master_data, file = meta_file_name)
 ```
 
