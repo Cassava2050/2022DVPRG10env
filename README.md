@@ -1,7 +1,5 @@
 # Progenitor trials data analysis
 
-# Low amilose EAR trials data analysis
-
 This repo contains the data analysis of 6 Low amilose trials in Colombia. Each trial was conducted with the following details:
 
 > -   **202081DVPRG_momi**: Conducted in July **2020** at the Momil location, with **228** cassava clones tested.
