@@ -56,9 +56,32 @@ if (local_file == "yes") {
 }
 
 # 1) load the data
-sel_data <- read_cassavabase(phenotypeFile = paste0(folder, file))
-
+sel_data_1 <- read_cassavabase(phenotypeFile = paste0(folder, file))
 ```
+
+## Pending dataset to analyze 06/292023
+202231DVPRG_ciat trial will be analyzed along the other 9 trials. Data was downloaded from Cassava Base. 
+
+```{r}
+local_file <- "yes" #
+
+if (local_file == "yes") {
+  folder <- here::here("data//")  
+  file <- "phenotype31.csv"
+  skip_col <- 3 # double check the number of col skipped
+  trial_interest = "DVPRG"
+  year_interest <- 2022
+}
+
+# 1) load the data
+sel_data31 <- read_cassavabase(phenotypeFile = paste0(folder, file))
+```
+I will put 202231DVPRG_ciat trial data together with other data on the same dataset
+
+```{r}
+sel_data <- sel_data_1 %>% bind_rows(sel_data31)
+```
+ 
 
 ## Change columns into standar names
 
@@ -175,7 +198,7 @@ plants_harvested <- trial_standard %>%
   group_by(use_trial_name) %>%
   count(obs_harvest_number) %>% arrange(desc(obs_harvest_number))
 
-plants_harvested %>% filter(!str_detect(use_trial_name, 'ciat')) %>% 
+plants_harvested %>% #filter(!str_detect(use_trial_name, 'ciat')) %>% 
   ggplot(aes(x = factor(obs_harvest_number), 
              y = n, fill = factor(obs_harvest_number))) +
   geom_col(col = 'black') +
@@ -184,9 +207,15 @@ plants_harvested %>% filter(!str_detect(use_trial_name, 'ciat')) %>%
   labs(x = "Harvest_plant_number", y = "Freq", fill = "Harvest_plant_number") +
   facet_wrap(~ use_trial_name, scales = 'free') +
   theme(strip.text.x = element_text(size = 7))
+
+# ggsave(paste("images\\bar", trial_interest, Sys.Date(), ".png", sep = "_"),
+#        units = "in", dpi = 300, width = 8, height = 4)
+
+trial_standard %>% filter(use_trial_name == "202231DVPRG_ciat") %>% 
+   discard(~all(is.na(.) | . =="")) %>% colnames()
 ```
 
-# ixing yield data of 202082DVPRG_pivi
+# Fixing yield data of 202082DVPRG_pivi
 
 ```{r eval=FALSE}
 trial_standard <-
@@ -212,7 +241,8 @@ trial_standard_new <- trial_standard %>%
                      str_detect(use_trial_name, "202136") &  str_detect(use_trial_name , trial_interest) ~ 4,
                      str_detect(use_trial_name, "202217") &  str_detect(use_trial_name , trial_interest) ~ 8,
                      str_detect(use_trial_name, "202218") &  str_detect(use_trial_name , trial_interest) ~ 6,
-                     str_detect(use_trial_name, "202252") &  str_detect(use_trial_name , trial_interest) ~ 6),
+                     str_detect(use_trial_name, "202252") &  str_detect(use_trial_name , trial_interest) ~ 6,
+                     str_detect(use_trial_name, "202231") &  str_detect(use_trial_name , trial_interest) ~ 2),
          obs_germination_perc = obs_germinated_number_plot/obs_planted_number_plot * 100,
          # 2) calculate area per plant
          area_plant = (use_plot_length*use_plot_width)/obs_planted_number_plot,
@@ -323,11 +353,11 @@ plot_bxp <- trial_tidy %>%
   )) %>%
   ggplot(aes(x = trial_name, y = values)) +
   geom_violin(trim = FALSE, fill = "gray") +
-  geom_boxplot(width = 0.2, trim = FALSE) +
+  geom_boxplot(width = 0.2) +
   labs(x = NULL, y = NULL, title = "") +
   theme_xiaofei() +
   theme(
-    axis.text.x = element_text(size = 7, vjust = 1, angle = 65),
+    axis.text.x = element_text(size = 7, vjust = 1),
     axis.text.y = element_text(size = 8),
     plot.title = element_text(color = "black"),
     strip.text.x = element_text(
@@ -337,9 +367,9 @@ plot_bxp <- trial_tidy %>%
     ncol = 5, scales = "free_y"
   ) 
 plot_bxp
-# ggsave(paste0("images\\boxplot_", trial_interest, Sys.Date(), ".png"),
-#     plot = plot_bxp, units = "in", dpi = 300, width = 12, height = 10
-#   )
+ggsave(paste0("images\\boxplot_", trial_interest, Sys.Date(), ".png"),
+    plot = plot_bxp, units = "in", dpi = 300, width = 12, height = 10
+  )
 ```
 
 # Traits evaluated
@@ -412,8 +442,10 @@ list_file = list.files(here::here("output"))
 sel_file = list_file[str_detect(list_file, "_tidy_data4analysis_") &
                        str_detect(list_file,
                                   paste(year_interest, trial_interest, sep=""))]
+
+sel_file
 # the data we will use
-sel_file_use = sel_file[1]
+sel_file_use = sel_file[2]
 
 sel_file_use
 trial1_tidy = read.csv(here::here("output", sel_file_use), header=TRUE,
@@ -553,7 +585,7 @@ my_dat <- trial_rm_sd %>%
   add_column(block = NA) %>% mutate(block = as.factor(block))
 
 
-my_dat <- my_dat[!my_dat$trial_name %in% c("202136DVPRG_ciat", "202050DVPRG_ciat"), ]
+my_dat <- my_dat[!my_dat$trial_name %in% c("202136DVPRG_ciat", "202050DVPRG_ciat", "202231DVPRG_ciat"), ]
 
 
 results <- check_design_met(
@@ -570,8 +602,8 @@ results <- check_design_met(
 
 shared <- plot(results, type = "connectivity")
 
-# ggsave(paste0('images\\shared_', trial_interest, "_", group, "_", Sys.Date(), ".png"),
-#        plot = shared, units = "in", dpi = 300, width = 8, height = 6)
+ggsave(paste('images\\shared_', trial_interest, Sys.Date(), ".png", sep = "_"),
+       plot = shared, units = "in", dpi = 300, width = 8, height = 6)
   
 summary <- results$summ_traits 
 
@@ -584,9 +616,9 @@ p1 <- summary %>%
   theme(axis.text.x = element_text(hjust = 1 , angle = 75, size = 16),
         axis.text.y = element_text(size = 16))
 p1
-# ggsave(paste0("images\\missing_", trial_interest, "_", group, "_", Sys.Date(), ".png"),
-#      plot = p1, units = "in", dpi = 300, width = 15, height = 6
-#    )
+ggsave(paste0("images\\missing_", trial_interest, "_", Sys.Date(), ".png"),
+     plot = p1, units = "in", dpi = 300, width = 15, height = 6
+   )
 master_data[["summ_traits"]] <- summary
 ```
 
@@ -631,10 +663,8 @@ obj <- single_trial_analysis(results = results,
                              progress = TRUE,
                              remove_outliers = FALSE)
 
-elements_to_remove <- c("202050DVPRG_ciat", "202136DVPRG_ciat")
 
-trials <- unique(my_dat$trial_name)[!unique(my_dat$trial_name) %in% elements_to_remove]
-
+trials <- unique(my_dat$trial_name)
 
 header_sort = vector()
 i = 1
@@ -661,6 +691,56 @@ for (i in 1:length(trials)) {
 
 ```
 
+## Palmira trials
+
+```{r}
+
+trial_palmira <- c("202136DVPRG_ciat", "202050DVPRG_ciat", "202231DVPRG_ciat")
+
+col_names_palmira <- vector("character")
+
+i = 1
+for (i in 1:length(trial_palmira)) {
+  
+  cat("\n_______________")
+  cat("\nTRIAL:", trial_palmira[i], "\n")
+  cat("_______________\n")
+  
+  PALMIRA <- trial_rm_sd %>% filter(trial_name == trial_palmira[i]) %>%
+    select(accession_name, any_of(trait_ideal)) %>% 
+    discard(~all(is.na(.) | . == ""))
+  
+   
+    
+  # extract reps in palmira
+  testigos_palmira <- PALMIRA %>% count(accession_name) %>% filter(n > 1) %>% pull(accession_name)
+
+  # calculate mean of checks in Palmira
+  
+  palmira_checks_summary <- PALMIRA %>% filter(accession_name %in% testigos_palmira) %>% 
+    group_by(accession_name) %>% 
+    summarise(across(where(is.numeric), mean))
+  
+  # remeve checks from original data and bind their mean values
+  
+  one_rep_palmira <- PALMIRA %>% filter(!accession_name %in% testigos_palmira) %>% 
+    bind_rows(palmira_checks_summary)
+  
+  col_names_palmira <- c(unique(colnames(one_rep_palmira)))
+ 
+  #var_ciat_51 <- colnames(one_rep_palmira_51)[-1] # store palmira_trials headers in vector empty
+  
+  # paste BLUEs_ word to each trait of one_rep_palmira
+  
+  colnames(one_rep_palmira) <- 
+    c("accession_name", paste("BLUEs", colnames(one_rep_palmira[-1]), sep = "_"))
+  
+  # add palmira BLUEs_value to master file
+  
+  master_data[[paste0("BLUE_", trial_palmira[i])]] <- 
+    one_rep_palmira %>%  mutate(across(where(is.numeric), round, 2))
+}
+```
 
 
 ## Single heritability
@@ -694,8 +774,7 @@ single_h2 %>%
 ```{r}
 met_results <- met_analysis(obj, 
                             filter_traits = trait_ideal[!trait_ideal %in% c("frogskin1_5",
-                                                                            "root_number",
-                                                                            "root_rot_number")],
+                                                                            "root_number")],
                           progress = TRUE)
 # h2 gxe
 master_data[["h2_gxe"]] <- 
@@ -724,30 +803,39 @@ master_data[[paste0("BLUPs_", "gxe")]] <- BLUPs_table
 ```{r dpi=300}
 
 #Yield
-corrplot(met_results$VCOV$yield_ha$CORR, method="color",  
-         type="lower", order="hclust", 
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black",
-         tl.cex = 0.8,#Text label color and rotation
-         diag=T 
-         )
+covcor_heat(matrix = met_results$VCOV$yield_ha$CORR, size = 6, legend =c(0.6, 0.9)) +
+  theme(
+  axis.text.y = element_text(size = 14),
+  axis.text.x = element_text(size = 14))
+
+# ggsave(paste0("images\\yield_vcor", trial_interest, Sys.Date(), ".png"),
+#        units = "in", dpi = 300, width = 6, height = 6)
 
 #Dry matter
-corrplot(met_results$VCOV$DM_gravity$CORR, method="color",  
-         type="lower", order="hclust", 
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black",
-         tl.cex = 0.8,#Text label color and rotation
-         diag=T 
-         )
-# plant_type
-corrplot(met_results$VCOV$plant_type$CORR, method="color",  
-         type="lower", order="hclust", 
-         addCoef.col = "black", # Add coefficient of correlation
-         tl.col="black",
-         tl.cex = 0.8,#Text label color and rotation
-         diag=T
-         )
+covcor_heat(matrix = met_results$VCOV$DM_gravity$CORR, size = 6, legend =c(0.6, 0.9)) +
+  theme(
+  axis.text.y = element_text(size = 14),
+  axis.text.x = element_text(size = 14))
+
+# ggsave(paste0("images\\DM_gravity_vcor", trial_interest, Sys.Date(), ".png"),
+#        units = "in", dpi = 300, width = 6, height = 6)
+
+
+
+#Dry matter
+covcor_heat(matrix = met_results$VCOV$DM_gravity$CORR, size = 6, legend =c(0.6, 0.9)) +
+  theme(
+  axis.text.y = element_text(size = 14),
+  axis.text.x = element_text(size = 14))
+
+# ggsave(paste0("images\\DM_gravity_vcor", trial_interest, Sys.Date(), ".png"),
+#        units = "in", dpi = 300, width = 6, height = 6)
+```
+
+## Save variance covariance correlation
+
+```{r}
+as.data.frame(do.call(rbind, met_results$VCOV))$CORR
 ```
 
 ## Save the BLUEs or raw data across the trials
@@ -756,15 +844,19 @@ corrplot(met_results$VCOV$plant_type$CORR, method="color",
 variables <- colnames(BLUPs_table)[!grepl("accession_name", colnames(BLUPs_table))]
 for (var in variables) {
   
+  cat("\n_______________")
+  cat("\nTRAIT:", var, "\n")
+  cat("_______________\n")
+  
   blue_blup <-
   obj$blues_blups %>%
   select(trial, genotype, trait, BLUEs) %>%
   spread(trait, value = BLUEs) %>%
   select(trial, genotype, any_of(var)) %>%
   group_by(trial, genotype) %>%
-  pivot_wider(names_from = trial, values_from = .data[[var]]) %>%
+  pivot_wider(names_from = trial, values_from = any_of(var)) %>%
   right_join(BLUPs_table %>%
-    select(accession_name, .data[[var]]), by = c("genotype" = "accession_name")) %>%
+    select(accession_name, any_of(var)), by = c("genotype" = "accession_name")) %>%
   arrange(is.na(across(where(is.numeric))), across(where(is.numeric))) %>%
   mutate(across(where(is.numeric), round, 2))
 # remove all NA columns
@@ -773,31 +865,17 @@ blue_blup <- blue_blup[, colSums(is.na(blue_blup)) < nrow(blue_blup)]
 master_data[[paste0("BLUP_BLUE_", var)]] <- blue_blup
 }
 
-
-
-PALMIRA <- trial_rm_sd %>% filter(trial_name %in% c("202050DVPRG_ciat", "202136DVPRG_ciat")) %>% 
-  select(accession_name, trial_name, root_type1_5) %>% 
-  filter(!accession_name %in% c("GM10055-1", "GM10055-2", "SM1127-8_is_Cubana")) %>% 
-  pivot_wider(names_from = trial_name, values_from = root_type1_5)
-
-
-master_data$BLUP_BLUE_root_type1_5 <- master_data$BLUP_BLUE_root_type1_5 %>% 
-  left_join(PALMIRA, by = c("genotype" = "accession_name")) %>% 
-  select(-c(root_type1_5), everything(), root_type1_5)
-
 ```
 
 ## Stability analysis
 
 ```{r}
-
 for (var in variables) {
 
 stab <- met_results$stability %>% 
   filter(trait == var) %>% 
   arrange(superiority) %>% 
-        pivot_wider(names_from = "trait", values_from = c('predicted.value')) %>% 
-  filter(genotype %in% shared_genos)
+        pivot_wider(names_from = "trait", values_from = c('predicted.value')) 
 
 # Change colname
 colnames(stab)[5] <- paste('BLUPs', colnames(stab)[5], sep = '_') 
@@ -815,6 +893,10 @@ stab_values <- master_data[ind] %>%
   reduce(inner_join, by = "genotype") %>% 
   select(!starts_with("BLUPs_")) %>% 
   mutate(across(where(is.numeric), round, 2))
+
+# remove multiple stability sheets
+
+master_data[ind] <- NULL
 
 
 ```
@@ -847,21 +929,57 @@ BLUEs_BLUPs <-
 # remove all NA columns
   BLUEs_BLUPs <- BLUEs_BLUPs[, colSums(is.na(BLUEs_BLUPs)) < nrow(BLUEs_BLUPs)]
 
-
-# put BLUES from PALMIRA data set together with the rest.
-  
-colnames(PALMIRA)[-1] <- paste("BLUEs_root_type1_5", colnames(PALMIRA)[-1], sep="_")
-  
-BLUEs_BLUPs <- 
-  BLUEs_BLUPs %>% left_join(PALMIRA, by = c("genotype" = "accession_name"))
-
-
 # put all together stab_values with blues_blups
 BLUEs_BLUPs <- 
   BLUEs_BLUPs %>% left_join(stab_values, by = 'genotype')  
-  
+
+```
+
+```{r}
+
+#####I need to put together the trials from Palmira with the rest 
+
+# 202136DVPRG_ciat
+  BLUE_202136DVPRG_ciat <- master_data$BLUE_202136DVPRG_ciat
     
+  
+colnames(BLUE_202136DVPRG_ciat)[-1] <-
+    c(paste(colnames(BLUE_202136DVPRG_ciat)[-1], "202136DVPRG_ciat", sep = "_")) 
+  
+
+BLUEs_BLUPs <- 
+  BLUEs_BLUPs %>% left_join(BLUE_202136DVPRG_ciat, by = c("genotype" = "accession_name"))
+
+# BLUE_202050DVPRG_ciat
+BLUE_202050DVPRG_ciat <- master_data$BLUE_202050DVPRG_ciat
+
+colnames(BLUE_202050DVPRG_ciat)[-1] <-
+  c(paste(colnames(BLUE_202050DVPRG_ciat)[-1], "202050DVPRG_ciat", sep = "_"))
+
+BLUEs_BLUPs <- 
+  BLUEs_BLUPs %>% left_join(BLUE_202050DVPRG_ciat, by = c("genotype" = "accession_name"))
+
+
+# BLUE_202231DVPRG_ciat
+BLUE_202231DVPRG_ciat <- master_data$BLUE_202231DVPRG_ciat
+
+colnames(BLUE_202231DVPRG_ciat)[-1] <-
+  c(paste(colnames(BLUE_202231DVPRG_ciat)[-1], "202231DVPRG_ciat", sep = "_"))
+
+BLUEs_BLUPs <- 
+  BLUEs_BLUPs %>% left_join(BLUE_202231DVPRG_ciat, by = c("genotype" = "accession_name"))
+
 header_sort = vector()
+
+# names_50 <- colnames(master_data$BLUE_202050DVPRG_ciat)
+# names_36 <- colnames(master_data$BLUE_202136DVPRG_ciat)
+# names_31 <- colnames(master_data$BLUE_202231DVPRG_ciat)
+
+# put gxe var toguether single var
+
+variables <- unique(c(variables, col_names_palmira)) # change col_names_palmira by colnames of tree data sets from Palmira
+
+# order header BLUEs_BLUPs table
 for (i in 1:length(variables)) {
   
   header_sort = c(header_sort, 
@@ -869,7 +987,6 @@ for (i in 1:length(variables)) {
   )
   
 }
-
 
 BLUEs_BLUPs <- BLUEs_BLUPs %>%
   select(genotype, all_of(header_sort), -starts_with("se")) 
@@ -904,16 +1021,16 @@ geno_cor <- gg_cor(
 folder_output <- here::here("output//")
 meta_file_name <- paste0(folder_output, paste("2022", trial_interest, "master_results", Sys.Date(), ".xlsx", sep = "_"))
 
-# It is neccessary change some elements names from master_file
-grep("^stability_root_number_commercial", names(master_data))
-
-names(master_data)[19] <- "BLUP_BLUE_germ_number_plot"
-names(master_data)[29] <- "BLUP_BLUE_root_commercial"
-names(master_data)[44] <- "stability_germ_number_plot"
-names(master_data)[54] <- "stability_root_commercial"
-
 write.xlsx(master_data, file = meta_file_name)
 
+# It is neccessary change some elements names from master_file
+grep("^BLUP_BLUE_germinated_number_plot", names(master_data))
+names(master_data)[22] <- "BLUP_BLUE_germ_number_plot"
+
+grep("^BLUP_BLUE_root_number_commercial", names(master_data))
+names(master_data)[32] <- "BLUP_BLUE_root_commercial"
+
+write.xlsx(master_data, file = meta_file_name)
 ```
 
 ## Index selection
@@ -924,21 +1041,14 @@ sel_file <- list_file[str_detect(list_file, "_master_results_") &
   str_detect(list_file, trial_interest)]
 sel_file
 
-sel_file[3]
+sel_file[4]
 blupDF_kp <- read_excel(
   paste(folder_output,
-    sel_file[3],
+    sel_file[4],
     sep = ""
   ),
   sheet = paste0("BLUPs_", "gxe")
 )
-```
-
-## Filter shared genotypes from 2022
-
-```{r}
-blupDF_kp <- blupDF_kp %>% 
-  filter(accession_name %in% shared_genos)
 ```
 
 ## Selection index
