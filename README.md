@@ -1,4 +1,4 @@
-![image](https://github.com/Cassava2050/2022DVPRG10env/assets/122100558/7431922d-760f-4721-8761-d170e40976e4)# Progenitor trials data analysis
+# Progenitor trials data analysis
 
 This repo contains the data analysis of 10 DVPRG trials in Colombia. Each trial was conducted with the following details:
 
@@ -12,8 +12,6 @@ This repo contains the data analysis of 10 DVPRG trials in Colombia. Each trial 
 > -   **202218DVPRG_repe**: Conducted in May **2022** at the Repelon location, with **117** cassava clones tested.
 > -   **202252DVPRG_stom**: Conducted in June **2022** at the Santo Tomas location, with **117** cassava clones tested.
 > -   **202231DVPRG_ciat**: Conducted in July **2022** at the CIAT location. with **345** cassava clones tested.
-
-
 
 ![](https://github.com/Cassava2050/2022DVPRG8env/blob/main/images/map.png) 
 
